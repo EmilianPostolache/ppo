@@ -15,7 +15,7 @@ class PolicyNetwork:
         self._build_model()
 
     def _loss(self, mean, precision, G):
-
+        ...
 
     def _build_model(self):
         tf.reset_default_graph()

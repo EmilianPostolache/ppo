@@ -61,7 +61,7 @@ def run_batch(env, policy, batch_size, scaler):
                       'unscaled_obs': unscaled_obs}
         steps += observations.shape[0]
         trajectories.append(trajectory)
-    unscaled = np.concatenate(t['unscaled_obs'] for t in trajectories)
+    unscaled = np.concatenate([t['unscaled_obs'] for t in trajectories])
     scaler.update(unscaled)
     mean_return = np.mean([trajectory['rewards'].sum() for trajectory in trajectories])
     return trajectories, steps, mean_return

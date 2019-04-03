@@ -13,8 +13,7 @@ import numpy as np
 from gym import wrappers
 import datetime
 import os
-import sys
-from util import Logger
+from util import Logger, GracefulExit
 from ppo import PPO
 
 ENV_NAME = 'Humanoid-v3'
@@ -24,9 +23,9 @@ TIMESTAMP_FORMAT = '%b-%d_%H:%M:%S'
 
 # Hyperparameters
 GAMMA = 0.995
-LAMBDA = 0.5
+LAMBDA = 0.98
 NUM_EPISODES = 1000
-MAX_BATCH = 30
+MAX_BATCH = 20
 CLIP_RANGE = 0.2
 LR_POLICY = 3e-4
 LR_VALUE_F = 3e-4
@@ -37,12 +36,12 @@ def run_episode(env, policy):
     observation = env.reset()
     done = False
     while not done:
-        observations.append(observation.reshape(1, -1))
+        observation = observation.reshape(1, -1)
+        observations.append(observation)
         action = policy.sample(observation)
         observation, reward, done, _ = env.step(action)
         actions.append(action.reshape(1, -1))
         rewards.append(reward)
-        sys.exit()
     return np.concatenate(observations), np.concatenate(actions), np.array(rewards)
 
 
@@ -61,6 +60,7 @@ def run_batch(env, policy, batch_size):
 
 
 def train():
+    g_exit = GracefulExit()
     timestamp = datetime.datetime.utcnow().strftime(TIMESTAMP_FORMAT)
     logger = Logger(ENV_NAME, timestamp)
     env = gym.make(ENV_NAME)
@@ -75,12 +75,14 @@ def train():
         batch_size = min(MAX_BATCH, NUM_EPISODES - episode)
         trajectories, steps, mean_return = run_batch(env, agent.policy, batch_size)
         episode += batch_size
-        logger.log({'episode': episode,
+        logger.log({'_time': datetime.datetime.utcnow().strftime(TIMESTAMP_FORMAT),
+                    '_episode': episode,
                     'steps': steps,
-                    'mean_return': mean_return})
+                    '_mean_return': mean_return})
         agent.update(trajectories)
         logger.write()
-
+        if g_exit.exit:
+            break
     agent.close()
     logger.close()
 

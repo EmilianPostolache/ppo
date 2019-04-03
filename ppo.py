@@ -79,11 +79,11 @@ class Policy:
 
     def _layers(self):
         # layer 1
-        out = tf.layers.dense(self.ph_obs, self.ph_obs * self.LAYER_MULT, tf.nn.tanh, name='layer1')
+        out = tf.layers.dense(self.ph_obs, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer1')
         # layer 2
-        out = tf.layers.dense(out, self.ph_obs * self.LAYER_MULT, tf.nn.tanh, name='layer2')
+        out = tf.layers.dense(out, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer2')
         # layer 3
-        out = tf.layers.dense(out, int(self.ph_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
+        out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
         # output layer (mean)
         self.means = tf.layers.dense(out, self.dim_act, name='means')
         self.log_vars = tf.get_variable('log_vars', (self.dim_act,), tf.float32)
@@ -160,14 +160,14 @@ class ValueFunction:
 
     def _layers(self):
         # layer 1
-        out = tf.layers.dense(self.ph_obs, self.ph_obs * self.LAYER_MULT, tf.nn.tanh, name='layer1')
+        out = tf.layers.dense(self.ph_obs, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer1')
         # layer 2
-        out = tf.layers.dense(out, self.ph_obs * self.LAYER_MULT, tf.nn.tanh, name='layer2')
+        out = tf.layers.dense(out, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer2')
         # layer 3
-        out = tf.layers.dense(out, int(self.ph_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
+        out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
         # output layer (mean)
         out = tf.layers.dense(out, 1, name='means')
-        self.out = np.squeeze(out)
+        self.out = tf.squeeze(out)
 
     def _loss(self):
         self.loss = tf.reduce_mean(tf.square(self.out - self.ph_val))

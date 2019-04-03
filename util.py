@@ -1,5 +1,6 @@
 import csv
 import os
+import signal
 
 LOG_DIR = 'logs'
 
@@ -20,6 +21,7 @@ class Logger:
             fieldnames = list(self.log_entry.keys())
             fieldnames.sort()
             self.writer = csv.DictWriter(self.file, fieldnames=fieldnames)
+            self.writer.writeheader()
         self.writer.writerow(self.log_entry)
         self.log_entry = {}
 
@@ -27,8 +29,8 @@ class Logger:
         keys = list(self.log_entry.keys())
         keys.sort()
         episode = self.log_entry['_episode']
-        mean_reward = self.log_entry['_mean_reward']
-        print(f'~~~~~~ Episode {episode}, Mean Return = {mean_reward:1.f} ~~~~~')
+        mean_return = self.log_entry['_mean_return']
+        print(f'~~~~~~ Episode {episode}, Mean Return = {mean_return:.3f} ~~~~~')
         for key in keys:
             if key[0] != '_':
                 print(f'{key}: {self.log_entry[key]:.5g}')
@@ -39,3 +41,14 @@ class Logger:
 
     def close(self):
         self.file.close()
+
+
+class GracefulExit:
+    def __init__(self):
+        self.exit = False
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+
+    def signal_handler(self, signal, frame):
+        print('You pressed Ctrl+C!')
+        self.exit = True

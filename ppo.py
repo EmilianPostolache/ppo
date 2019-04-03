@@ -143,12 +143,13 @@ class ValueFunction:
     """ NN-based state-value function """
     HID1_MULT = 10
 
-    def __init__(self, obs_dim):
+    def __init__(self, obs_dim, lr, logger):
         """
         Args:
             obs_dim: number of dimensions in observation vector (int)
             hid1_mult: size of first hidden layer, multiplier of obs_dim
         """
+        self.logger = logger
         self.replay_buffer_x = None
         self.replay_buffer_y = None
         self.obs_dim = obs_dim
@@ -194,7 +195,7 @@ class ValueFunction:
         self.sess = tf.Session(graph=self.g)
         self.sess.run(self.init)
 
-    def fit(self, x, y, logger):
+    def update(self, x, y):
         """ Fit model to current data batch + previous data batch
 
         Args:
@@ -225,7 +226,7 @@ class ValueFunction:
         loss = np.mean(np.square(y_hat - y))  # explained variance after update
         exp_var = 1 - np.var(y - y_hat) / np.var(y)  # diagnose over-fitting of val func
 
-        logger.log({'ValFuncLoss': loss,
+        self.logger.log({'ValFuncLoss': loss,
                     'ExplainedVarNew': exp_var,
                     'ExplainedVarOld': old_exp_var})
 
@@ -236,7 +237,7 @@ class ValueFunction:
 
         return np.squeeze(y_hat)
 
-    def close_sess(self):
+    def close(self):
         """ Close TensorFlow session """
         self.sess.close()
 

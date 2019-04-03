@@ -79,11 +79,15 @@ class Policy:
 
     def _layers(self):
         # layer 1
-        out = tf.layers.dense(self.ph_obs, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer1')
+        out = tf.layers.dense(self.ph_obs, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT,
+                              kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / self.dim_obs)),
+                              name='layer1')
         # layer 2
-        out = tf.layers.dense(out, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer2')
-        # layer 3
-        out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
+        out = tf.layers.dense(out, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT, tf.nn.tanh,
+                              kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / 64)),
+                              name='layer2')
+        # # layer 3
+        # out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
         # output layer (mean)
         self.means = tf.layers.dense(out, self.dim_act, name='means')
         self.log_vars = tf.get_variable('log_vars', (self.dim_act,), tf.float32)
@@ -160,11 +164,15 @@ class ValueFunction:
 
     def _layers(self):
         # layer 1
-        out = tf.layers.dense(self.ph_obs, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer1')
+        out = tf.layers.dense(self.ph_obs, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT,
+                              kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / self.dim_obs)),
+                              name='layer1')
         # layer 2
-        out = tf.layers.dense(out, self.dim_obs * self.LAYER_MULT, tf.nn.tanh, name='layer2')
+        out = tf.layers.dense(out, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT,
+                              kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / 64)),
+                              name='layer2')
         # layer 3
-        out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
+        #  out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
         # output layer (mean)
         out = tf.layers.dense(out, 1, name='means')
         self.out = tf.squeeze(out)

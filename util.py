@@ -1,8 +1,37 @@
 import csv
 import os
 import signal
+import numpy as np
 
 LOG_DIR = 'logs'
+
+
+class VecScaler:
+
+    def __init__(self, obs_dim):
+        self.var = np.zeros(obs_dim)
+        self.mean = np.zeros(obs_dim)
+        self.m = 0
+        self.first_pass = True
+
+    def update(self, x):
+        if self.first_pass:
+            self.mean = np.mean(x, axis=0)
+            self.var = np.var(x, axis=0)
+            self.m = x.shape[0]
+            self.first_pass = False
+        else:
+            n = x.shape[0]
+            new_data_var = np.var(x, axis=0)
+            new_data_mean = np.mean(x, axis=0)
+            new_mean = ((self.mean * self.m) + (new_data_mean * n)) / (self.m + n)
+            self.var = ((self.m * (self.var + self.mean ** 2)) +
+                        (n * (new_data_var + new_data_mean ** 2))) / (self.m + n) - (new_mean ** 2)
+            self.mean = new_mean
+            self.m += n
+
+    def get(self):
+        return 1/(np.sqrt(self.var) + 0.1) / 3, self.mean
 
 
 class Logger:

@@ -14,7 +14,7 @@ import numpy as np
 from gym import wrappers
 import datetime
 import os
-from util import Logger, GracefulExit
+from util import Logger, GracefulExit, VecScaler
 from ppo import PPO
 
 ENV_NAME = 'Humanoid-v3'
@@ -32,28 +32,33 @@ LR_POLICY = 3e-4
 LR_VALUE_F = 3e-4
 
 
-def run_episode(env, policy):
-    observations, actions, rewards = [], [], []
+def run_episode(env, policy, scaler):
+    observations, actions, rewards, unscaled_obs = [], [], [], []
     observation = env.reset()
+    scale, offset = scaler.get()
     done = False
     while not done:
         observation = observation.reshape(1, -1)
+        unscaled_obs.append(observation)
+        observation = (observation - offset) * scale
         observations.append(observation)
         action = policy.sample(observation)
         observation, reward, done, _ = env.step(action)
         actions.append(action.reshape(1, -1))
         rewards.append(reward)
-    return np.concatenate(observations), np.concatenate(actions), np.array(rewards)
+    return (np.concatenate(observations), np.concatenate(actions), np.array(rewards),
+            np.concatenate(unscaled_obs))
 
 
-def run_batch(env, policy, batch_size):
+def run_batch(env, policy, batch_size, scaler):
     trajectories = []
     steps = 0
     for episode in range(batch_size):
-        observations, actions, rewards = run_episode(env, policy)
+        observations, actions, rewards, unscaled_obs = run_episode(env, policy, scaler)
         trajectory = {'observations': observations,
                       'actions': actions,
-                      'rewards': rewards}
+                      'rewards': rewards,
+                      'unscaled_obs': unscaled_obs}
         steps += observations.shape[0]
         trajectories.append(trajectory)
     mean_return = np.mean([trajectory['rewards'].sum() for trajectory in trajectories])
@@ -67,14 +72,16 @@ def train():
     env = gym.make(ENV_NAME)
     dim_obs = env.observation_space.shape[0]
     dim_act = env.action_space.shape[0]
+    scaler = VecScaler(dim_obs)
     rec_dir = os.path.join(REC_DIR, ENV_NAME, timestamp)
     env = gym.wrappers.Monitor(env, rec_dir, force=True)
     agent = PPO(dim_obs, dim_act, GAMMA, LAMBDA, CLIP_RANGE, LR_POLICY,
                 LR_VALUE_F, logger)
+    run_batch(env, agent.policy, 5, scaler)
     episode = 0
     while episode < NUM_EPISODES:
         batch_size = min(MAX_BATCH, NUM_EPISODES - episode)
-        trajectories, steps, mean_return = run_batch(env, agent.policy, batch_size)
+        trajectories, steps, mean_return = run_batch(env, agent.policy, batch_size, scaler)
         episode += batch_size
         logger.log({'_time': datetime.datetime.utcnow().strftime(TIMESTAMP_FORMAT),
                     '_episode': episode,

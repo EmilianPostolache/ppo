@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """ This module contains the main loop of the training
 simulation. It is separated from the algorithm that
 implements the learning process, so it can be used with
@@ -24,7 +25,7 @@ TIMESTAMP_FORMAT = '%b-%d_%H:%M:%S'
 # Hyperparameters
 GAMMA = 0.995
 LAMBDA = 0.98
-NUM_EPISODES = 1000
+NUM_EPISODES = 100000
 MAX_BATCH = 20
 CLIP_RANGE = 0.2
 LR_POLICY = 3e-4

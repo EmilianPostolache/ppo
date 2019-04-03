@@ -30,10 +30,10 @@ class Logger:
         keys.sort()
         episode = self.log_entry['_episode']
         mean_return = self.log_entry['_mean_return']
-        print(f'~~~~~~ Episode {episode}, Mean Return = {mean_return:.3f} ~~~~~')
+        print('~~~~~~ Episode {}, Mean Return = {:.3f} ~~~~~'.format(episode, mean_return))
         for key in keys:
             if key[0] != '_':
-                print(f'{key}: {self.log_entry[key]:.5g}')
+                print('{}: {:.5g}'.format(key, self.log_entry[key]))
         print('\n')
 
     def log(self, items):

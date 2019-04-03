@@ -8,6 +8,7 @@ Written by Emilian Postolache (github.com/EmilianPostolache)
 
 Based on an implementation by Patrick Coady (pat-coady.github.io)
 """
+import time
 
 import gym
 import numpy as np
@@ -32,12 +33,19 @@ LR_POLICY = 3e-4
 LR_VALUE_F = 3e-4
 
 
+# Tricks: - scale observations   !
+#         - add a time step feature   !
+
 def run_episode(env, policy, scaler):
     observations, actions, rewards, unscaled_obs = [], [], [], []
     observation = env.reset()
     scale, offset = scaler.get()
+    step = 0.0
+    scale[-1] = 1.0
+    offset[-1] = 0.0
     done = False
     while not done:
+        observation = np.append(observation, step)
         observation = observation.reshape(1, -1)
         unscaled_obs.append(observation)
         observation = (observation - offset) * scale
@@ -72,7 +80,7 @@ def train():
     timestamp = datetime.datetime.utcnow().strftime(TIMESTAMP_FORMAT)
     logger = Logger(ENV_NAME, timestamp)
     env = gym.make(ENV_NAME)
-    dim_obs = env.observation_space.shape[0]
+    dim_obs = env.observation_space.shape[0] + 1
     dim_act = env.action_space.shape[0]
     scaler = VecScaler(dim_obs)
     rec_dir = os.path.join(REC_DIR, ENV_NAME, timestamp)

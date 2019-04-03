@@ -6,6 +6,8 @@ from sklearn.utils import shuffle
 
 class PPO:
     """Class that implements the PPO learning algorithm.
+
+    Tricks: - scale rewards   !
     """
     def __init__(self, dim_obs, dim_act, gamma, lambda_, c, lr_policy, lr_valuef, logger):
         self.gamma = gamma
@@ -29,15 +31,23 @@ class PPO:
     def _compute_advantages(self, trajectories):
         advantages = []
         for trajectory in trajectories:
+            if self.gamma < 0.999:
+                rewards = trajectory['rewards'] * (1 - self.gamma)
+            else:
+                rewards = trajectory['rewards']
             values = self.value_function.predict(trajectory['observations'])
-            td_residuals = trajectory['rewards'] - values + self.gamma * np.append(values[1:], 0)
+            td_residuals = rewards - values + self.gamma * np.append(values[1:], 0)
             advantages.append(self._discount(td_residuals, self.gamma * self.lambda_))
         return np.concatenate(advantages)
 
     def _compute_discounted_returns(self, trajectories):
         discounted_returns = []
         for trajectory in trajectories:
-            discounted_returns.append(self._discount(trajectory['rewards'], self.gamma))
+            if self.gamma < 0.999:
+                rewards = trajectory['rewards'] * (1 - self.gamma)
+            else:
+                rewards = trajectory['rewards']
+            discounted_returns.append(self._discount(rewards, self.gamma))
         return np.concatenate(discounted_returns)
 
     @staticmethod
@@ -46,7 +56,13 @@ class PPO:
 
 
 class Policy:
-    """ NN-based policy approximation """
+    """ NN-based policy approximation
+
+    Tricks: - logvar speed    x
+            - dynamic layer size    x
+            - dynamic lr   x
+            - KL dropout   x
+    """
     PATRICK = False
 
     if PATRICK:

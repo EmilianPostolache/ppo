@@ -7,6 +7,7 @@ LOG_DIR = 'logs'
 
 
 class VecScaler:
+    # Tricks: - strange division by 3 on std dev  !
 
     def __init__(self, obs_dim):
         self.var = np.zeros(obs_dim)
@@ -25,13 +26,19 @@ class VecScaler:
             new_data_var = np.var(x, axis=0)
             new_data_mean = np.mean(x, axis=0)
             new_mean = ((self.mean * self.m) + (new_data_mean * n)) / (self.m + n)
-            self.var = ((self.m * (self.var + self.mean ** 2)) +
-                        (n * (new_data_var + new_data_mean ** 2))) / (self.m + n) - (new_mean ** 2)
+            self.var = ((self.m * (self.var + np.square(self.mean))) +
+                        (n * (new_data_var + np.square(new_data_mean)))) / (self.m + n) - (np.square(new_mean))
+            self.var = np.maximum(0.0, self.var)
             self.mean = new_mean
             self.m += n
 
     def get(self):
-        return 1/(np.sqrt(self.var) + 0.1) / 3, self.mean
+        # print('get:', 1/(np.sqrt(self.var) + 0.1) / 3)
+        try:
+            return 1/(np.sqrt(self.var) + 0.1) / 3, self.mean
+        except RuntimeWarning:
+            print(self.var)
+            exit()
 
 
 class Logger:

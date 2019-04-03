@@ -258,7 +258,7 @@ class Policy:
                     'Beta': self.beta,
                     '_lr_multiplier': self.lr_multiplier})
 
-    def close_sess(self):
+    def close(self):
         """ Close TensorFlow session """
         self.sess.close()
 

@@ -1,13 +1,10 @@
 import numpy as np
 from scipy.signal import lfilter
 import tensorflow as tf
-from sklearn.utils import shuffle
 
 
 class PPO:
     """Class that implements the PPO learning algorithm.
-
-    Tricks: - scale rewards   !
     """
     def __init__(self, dim_obs, dim_act, gamma, lambda_, c, lr_policy, lr_valuef, logger):
         self.gamma = gamma
@@ -57,11 +54,7 @@ class PPO:
 
 class Policy:
     """ NN-based policy approximation
-
     """
-
-
-    LAYER_MULT = 10
     EPOCHS = 20
     KL_TARGET = 0.003
 
@@ -96,15 +89,13 @@ class Policy:
 
     def _layers(self):
         # layer 1
-        out = tf.layers.dense(self.ph_obs, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT,
+        out = tf.layers.dense(self.ph_obs, 64, tf.nn.tanh,
                               kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / self.dim_obs)),
                               name='layer1')
         # layer 2
-        out = tf.layers.dense(out, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT, tf.nn.tanh,
+        out = tf.layers.dense(out, 64, tf.nn.tanh,
                               kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / 64)),
                               name='layer2')
-        # # layer 3
-        # out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
         # output layer (mean)
         self.means = tf.layers.dense(out, self.dim_act, name='means')
         self.log_vars = tf.get_variable('log_vars', (self.dim_act,), tf.float32)
@@ -157,7 +148,8 @@ class Policy:
         for e in range(self.EPOCHS):
             self.sess.run(self.op_train, feed_dict)
             loss, kl = self.sess.run([self.loss, self.kl], feed_dict)
-            if kl > self.KL_TARGET * 4:
+            # One could increment clipping range and reset it when exceed KL_TARGET
+            if kl > self.KL_TARGET:
                 break
         self.logger.log({'PolicyLoss': loss})
 
@@ -169,7 +161,6 @@ class Policy:
 class ValueFunction:
 
     """Value Function network"""
-    LAYER_MULT = 5
     EPOCHS = 10
 
     def __init__(self, dim_obs, lr, logger):
@@ -193,15 +184,14 @@ class ValueFunction:
 
     def _layers(self):
         # layer 1
-        out = tf.layers.dense(self.ph_obs, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT,
+        out = tf.layers.dense(self.ph_obs, 64, tf.nn.tanh,
                               kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / self.dim_obs)),
                               name='layer1')
         # layer 2
-        out = tf.layers.dense(out, 64, tf.nn.tanh,  # self.dim_obs * self.LAYER_MULT,
+        out = tf.layers.dense(out, 64, tf.nn.tanh,
                               kernel_initializer=tf.random_normal_initializer(stddev=np.sqrt(1 / 64)),
                               name='layer2')
         # layer 3
-        #  out = tf.layers.dense(out, int(self.dim_obs * self.LAYER_MULT / 2), tf.nn.tanh, name='layer3')
         # output layer (mean)
         out = tf.layers.dense(out, 1, name='means')
         self.out = tf.squeeze(out)

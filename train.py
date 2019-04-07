@@ -3,12 +3,7 @@
 simulation. It is separated from the algorithm that
 implements the learning process, so it can be used with
 a wide range of RL algorithms.
-
-Written by Emilian Postolache (github.com/EmilianPostolache)
-
-Based on an implementation by Patrick Coady (pat-coady.github.io)
 """
-import time
 
 import gym
 import numpy as np
@@ -31,10 +26,8 @@ MAX_BATCH = 20
 CLIP_RANGE = 0.2
 LR_POLICY = 3e-4
 LR_VALUE_F = 3e-4
+T = 2048
 
-
-# Tricks: - scale observations   !
-#         - add a time step feature   !
 
 def run_episode(env, policy, scaler):
     observations, actions, rewards, unscaled_obs = [], [], [], []
@@ -44,7 +37,8 @@ def run_episode(env, policy, scaler):
     scale[-1] = 1.0
     offset[-1] = 0.0
     done = False
-    while not done:
+    t = 0
+    while not done and t < T:
         observation = np.append(observation, step)
         observation = observation.reshape(1, -1)
         unscaled_obs.append(observation)
@@ -54,6 +48,8 @@ def run_episode(env, policy, scaler):
         observation, reward, done, _ = env.step(action)
         actions.append(action.reshape(1, -1))
         rewards.append(reward)
+        step += 1e-3
+        t += 1
     return (np.concatenate(observations), np.concatenate(actions), np.array(rewards),
             np.concatenate(unscaled_obs))
 
